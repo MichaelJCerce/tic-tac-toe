@@ -5,38 +5,60 @@ const gameBoard = (function () {
     [null, null, null],
     [null, null, null],
   ];
+  let gameStarted = false;
+  const players = [];
 
   const getCurrentPlayer = function () {
-    let temp = currentPlayer;
-    currentPlayer = (currentPlayer + 1) % 2;
-    return temp;
+    return players[currentPlayer];
   };
 
-  const print = function () {
-    for (let i = 0; i < currentState.length; ++i) {
-      const row = [];
-      for (let j = 0; j < currentState[0].length; ++j) {
-        row.push(currentState[i][j]);
-      }
-      console.log(row);
-    }
-    console.log("=========================");
+  const getCurrentState = function () {
+    return currentState;
   };
 
-  const reset = function () {
+  const isGameStarted = function () {
+    return gameStarted;
+  };
+
+  const resetState = function () {
     currentPlayer = 0;
-    for (let i = 0; i < this.currentState.length; ++i) {
-      for (let j = 0; j < this.currentState[0].length; ++j) {
-        this.currentState[i][j] = null;
+    for (let i = 0; i < currentState.length; ++i) {
+      for (let j = 0; j < currentState[0].length; ++j) {
+        currentState[i][j] = null;
       }
     }
+    gameStarted = false;
+    players.pop();
+    players.pop();
   };
 
-  return { currentState, getCurrentPlayer, print, reset };
+  const setCurrentPlayer = function () {
+    currentPlayer = (currentPlayer + 1) % 2;
+  };
+
+  const setCurrentState = function (row, col, mark) {
+    currentState[row][col] = mark;
+  };
+
+  const startGame = function (playerX, playerO) {
+    players.push(playerX);
+    players.push(playerO);
+    gameStarted = true;
+  };
+
+  return {
+    getCurrentPlayer,
+    getCurrentState,
+    isGameStarted,
+    resetState,
+    setCurrentPlayer,
+    setCurrentState,
+    startGame,
+  };
 })();
 
 const gameController = (function () {
-  const checkTie = function (currentState) {
+  const isTie = function (currentState) {
     for (let i = 0; i < currentState.length; ++i) {
       for (let j = 0; j < currentState[0].length; ++j) {
         if (currentState[i][j] === null) {
@@ -44,10 +66,11 @@ const gameController = (function () {
         }
       }
     }
+
     return true;
   };
 
-  const checkWin = function (currentState) {
+  const isWin = function (currentState) {
     for (let i = 0; i < currentState.length; ++i) {
       for (let j = 0; j < currentState[0].length; ++j) {
         if (
@@ -106,66 +129,123 @@ const gameController = (function () {
     return false;
   };
 
-  const makeMove = function (currentState, currentPlayer, boardSpot) {
+  const makeMove = function (board, boardSpace) {
+    const currentState = board.getCurrentState();
+    const [row, col] = boardSpace.dataset.cell.split(",");
     if (
-      boardSpot[0] < 0 ||
-      boardSpot[0] >= currentState.length ||
-      boardSpot[1] < 0 ||
-      boardSpot[1] >= currentState[0].length
+      !board.isGameStarted() ||
+      currentState[row][col] !== null ||
+      isTie(currentState) ||
+      isWin(currentState)
     ) {
-      return false;
+      return;
     }
-    if (currentState[boardSpot[0]][boardSpot[1]] === null) {
-      currentState[boardSpot[0]][boardSpot[1]] = currentPlayer.mark;
-      return true;
+
+    const player = board.getCurrentPlayer();
+
+    gameBoard.setCurrentState(row, col, player.mark);
+    displayController.markSpot(boardSpace, player.mark);
+
+    if (isWin(currentState)) {
+      displayController.setWinStatus(player);
+    } else if (isTie(currentState)) {
+      displayController.setTieStatus();
     } else {
-      return false;
+      board.setCurrentPlayer();
+      displayController.setPlayerStatus(board.getCurrentPlayer());
     }
   };
 
-  return { checkTie, checkWin, makeMove };
+  const resetGame = function (board) {
+    board.resetState();
+  };
+
+  const startGame = function (board, playerXName, playerOName) {
+    if (board.isGameStarted()) {
+      return;
+    }
+
+    const playerX = createUser(playerXName.trim(), "x");
+    const playerO = createUser(playerOName.trim(), "o");
+
+    board.startGame(playerX, playerO);
+    displayController.setPlayerStatus(playerX);
+  };
+
+  return {
+    makeMove,
+    resetGame,
+    startGame,
+  };
+})();
+
+const displayController = (function () {
+  const spaces = document.querySelectorAll(".space");
+  const start = document.querySelector(".start");
+  const reset = document.querySelector(".reset");
+  const playerX = document.querySelector("#player-x");
+  const playerO = document.querySelector("#player-o");
+  const gameStatus = document.querySelector(".game-status");
+
+  spaces.forEach((spot) => {
+    spot.addEventListener("click", () => {
+      gameController.makeMove(gameBoard, spot);
+    });
+  });
+
+  start.addEventListener("click", function (e) {
+    e.preventDefault();
+
+    if (playerX.value === "" && playerO.value === "") {
+      gameStatus.textContent = "need to give each player a name";
+    } else if (playerX.value === "") {
+      gameStatus.textContent = "need to give player x a name";
+    } else if (playerO.value === "") {
+      gameStatus.textContent = "need to give player o a name";
+    } else if (playerX.value.trim() === playerO.value.trim()) {
+      gameStatus.textContent = "players must have different names";
+    } else {
+      playerX.disabled = true;
+      playerO.disabled = true;
+      gameController.startGame(gameBoard, playerX.value, playerO.value);
+    }
+  });
+
+  reset.addEventListener("click", function (e) {
+    e.preventDefault();
+
+    gameController.resetGame(gameBoard);
+    spaces.forEach((spot) => {
+      spot.textContent = "";
+    });
+    playerX.disabled = false;
+    playerO.disabled = false;
+    gameStatus.textContent = "";
+  });
+
+  const markSpot = function (spot, mark) {
+    spot.textContent = mark;
+  };
+
+  const setPlayerStatus = function (currentPlayer) {
+    if (currentPlayer.name[currentPlayer.name.length - 1] === "s") {
+      gameStatus.textContent = `${currentPlayer.name}' turn`;
+    } else {
+      gameStatus.textContent = `${currentPlayer.name}'s turn`;
+    }
+  };
+
+  const setTieStatus = function () {
+    gameStatus.textContent = "Tie!";
+  };
+
+  const setWinStatus = function (currentPlayer) {
+    gameStatus.textContent = `${currentPlayer.name} wins!`;
+  };
+
+  return { markSpot, setPlayerStatus, setTieStatus, setWinStatus };
 })();
 
 function createUser(name, mark) {
   return { name, mark };
-}
-
-const steve = createUser("Steve", "x");
-const bob = createUser("Bob", "o");
-const players = [steve, bob];
-while (true) {
-  const currentPlayer = players[gameBoard.getCurrentPlayer()];
-  let response = prompt(`${currentPlayer.name}'s turn`);
-  if (!response) {
-    break;
-  }
-  while (
-    !gameController.makeMove(
-      gameBoard.currentState,
-      currentPlayer,
-      response.split(",")
-    )
-  ) {
-    response = prompt(`${currentPlayer.name}'s turn`);
-  }
-
-  gameBoard.print();
-
-  if (
-    gameController.checkWin(gameBoard.currentState) ||
-    gameController.checkTie(gameBoard.currentState)
-  ) {
-    if (gameController.checkWin(gameBoard.currentState)) {
-      console.log(`${currentPlayer.name} wins!`);
-    } else {
-      console.log("Tie!");
-    }
-
-    response = prompt("play again?[y/n]");
-    if (response === "y") {
-      gameBoard.reset();
-    } else {
-      break;
-    }
-  }
 }

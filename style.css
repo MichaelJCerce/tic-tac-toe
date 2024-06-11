@@ -1,3 +1,78 @@
+.board {
+  display: grid;
+  grid-template-rows: repeat(3, 150px);
+  grid-template-columns: repeat(3, 175px);
+  padding-top: 100px;
+  margin-bottom: 50px;
+  justify-content: center;
+}
+
+.space {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  font-size: 40px;
+  cursor: pointer;
+}
+
+.space:nth-child(1) {
+  border-left: none;
+  border-top: none;
+}
+
+.space:nth-child(2) {
+  border-top: none;
+}
+
+.space:nth-child(3) {
+  border-right: none;
+  border-top: none;
+}
+
+.space:nth-child(4) {
+  border-left: none;
+}
+
+.space:nth-child(6) {
+  border-right: none;
+}
+
+.space:nth-child(7) {
+  border-left: none;
+  border-bottom: none;
+}
+
+.space:nth-child(8) {
+  border-bottom: none;
+}
+
+.space:nth-child(9) {
+  border-right: none;
+  border-bottom: none;
+}
+
+.controls,
+.game-status {
+  text-align: center;
+}
+
+.names,
+.actions {
+  margin-bottom: 10px;
+}
+
+.game-status {
+  font-size: 25px;
+}
+
 body {
   margin: 0;
+}
+
+button {
+  padding: 3px 20px;
+  /* border: none; */
+  /* border-radius: 4px; */
+  cursor: pointer;
 }

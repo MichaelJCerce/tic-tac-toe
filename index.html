@@ -7,5 +7,32 @@
     <link rel="stylesheet" href="style.css" />
     <script src="script.js" defer></script>
   </head>
-  <body> </body>
+  <body>
+    <div class="board">
+      <div class="space" data-cell="0,0"></div>
+      <div class="space" data-cell="0,1"></div>
+      <div class="space" data-cell="0,2"></div>
+      <div class="space" data-cell="1,0"></div>
+      <div class="space" data-cell="1,1"></div>
+      <div class="space" data-cell="1,2"></div>
+      <div class="space" data-cell="2,0"></div>
+      <div class="space" data-cell="2,1"></div>
+      <div class="space" data-cell="2,2"></div>
+    </div>
+
+    <form action="" class="controls">
+      <div class="names">
+        <label for="player-x">x: </label>
+        <input type="text" id="player-x" placeholder="player x name" />
+        <label for="player-o">o: </label>
+        <input type="text" id="player-o" placeholder="player o name" />
+      </div>
+      <div class="actions">
+        <button class="start">start</button>
+        <button class="reset">reset</button>
+      </div>
+    </form>
+
+    <div class="game-status"></div>
+  </body>
 </html>
